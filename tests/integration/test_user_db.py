@@ -6,10 +6,10 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 
-from app import crud
 from app.models import User
+from app.operations import users as crud
 from app.schemas import UserCreate
-from app.security import verify_password
+from app.auth.security import verify_password
 
 pytestmark = pytest.mark.integration
 

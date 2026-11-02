@@ -11,10 +11,10 @@ image to Docker Hub when the tests pass.
 
 | Requirement | Where |
 |---|---|
-| SQLAlchemy `User` model: `username`, `email`, `password_hash` (unique constraints) and `created_at` | [`app/models.py`](app/models.py) |
-| `UserCreate` (username, email, password) and `UserRead` (no `password_hash`) | [`app/schemas.py`](app/schemas.py) |
-| `hash_password()` / `verify_password()` with bcrypt | [`app/security.py`](app/security.py) |
-| Create, look up and authenticate users | [`app/crud.py`](app/crud.py) |
+| SQLAlchemy `User` model: `username`, `email`, `password_hash` (unique constraints) and `created_at` | [`app/models/user.py`](app/models/user.py) |
+| `UserCreate` (username, email, password) and `UserRead` (no `password_hash`) | [`app/schemas/user.py`](app/schemas/user.py) |
+| `hash_password()` / `verify_password()` with bcrypt | [`app/auth/security.py`](app/auth/security.py) |
+| Create, look up and authenticate users | [`app/operations/users.py`](app/operations/users.py) |
 | REST API | [`app/main.py`](app/main.py) |
 | Unit tests (no database) | [`tests/unit/`](tests/unit) |
 | Integration tests (real PostgreSQL) | [`tests/integration/`](tests/integration) |
@@ -97,12 +97,16 @@ docker pull <your-dockerhub-username>/secure-user-model:latest
 
 ```
 app/
+  auth/
+    security.py  bcrypt hash_password / verify_password
+  models/
+    user.py      SQLAlchemy User model
+  operations/
+    users.py     create / get / authenticate users
+  schemas/
+    user.py      Pydantic UserCreate / UserRead / UserLogin
   config.py      settings from environment variables
   database.py    engine, session factory, declarative Base
-  models.py      SQLAlchemy User model
-  schemas.py     Pydantic UserCreate / UserRead / UserLogin
-  security.py    bcrypt hash_password / verify_password
-  crud.py        create / get / authenticate users
   main.py        FastAPI routes
 tests/
   unit/          hashing and schema tests

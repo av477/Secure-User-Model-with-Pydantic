@@ -5,7 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.security import BCRYPT_MAX_BYTES
+from app.auth.security import BCRYPT_MAX_BYTES
 
 USERNAME_PATTERN = r"^[A-Za-z0-9_.-]+$"
 

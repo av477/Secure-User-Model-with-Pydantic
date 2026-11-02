@@ -1,6 +1,6 @@
 import pytest
 
-from app.security import BCRYPT_MAX_BYTES, hash_password, verify_password
+from app.auth.security import BCRYPT_MAX_BYTES, hash_password, verify_password
 
 pytestmark = pytest.mark.unit
 

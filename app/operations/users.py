@@ -4,9 +4,9 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.security import hash_password, verify_password
 from app.models import User
 from app.schemas import UserCreate
-from app.security import hash_password, verify_password
 
 
 class DuplicateUserError(Exception):
