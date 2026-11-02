@@ -5,7 +5,7 @@ username and email, Pydantic schemas for input and output, bcrypt password hashi
 unit and integration tests, and a GitHub Actions pipeline that pushes a Docker
 image to Docker Hub when the tests pass.
 
-**Docker Hub image:** `https://hub.docker.com/r/<your-dockerhub-username>/secure-user-model`
+**Docker Hub repository:** [av477/secure-user-model](https://hub.docker.com/r/av477/secure-user-model)
 
 ## Features
 
@@ -55,18 +55,26 @@ DB_PORT=5434 API_PORT=8001 docker compose up --build
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        # macOS/Linux
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
 # Unit tests need no database
 pytest tests/unit
 
-# Integration tests need PostgreSQL
-docker run -d --name test-db -e POSTGRES_USER=ci_user -e POSTGRES_PASSWORD=ci_password \
+# Integration tests need a disposable PostgreSQL database
+docker run --rm -d --name test-db -e POSTGRES_USER=ci_user -e POSTGRES_PASSWORD=ci_password \
   -e POSTGRES_DB=ci_users -p 5433:5432 postgres:17
 export DATABASE_URL=postgresql+psycopg2://ci_user:ci_password@localhost:5433/ci_users
 pytest tests/integration --cov=app --cov-report=term-missing
 ```
+
+In Windows PowerShell, set the database URL with
+`$env:DATABASE_URL = "******localhost:5433/ci_users"` instead of `export`.
+Before running the integration tests, check that PostgreSQL is ready with
+`docker exec test-db pg_isready -U ci_user -d ci_users`; repeat until it reports
+that the server is accepting connections. Stop the disposable database with
+`docker stop test-db` after the tests finish.
 
 The integration tests drop and recreate the `users` table, so point `DATABASE_URL` at a test database only. Each test runs inside a transaction that is rolled back afterwards, so tests don't affect one another.
 
@@ -78,7 +86,8 @@ The integration tests drop and recreate the `users` table, so point `DATABASE_UR
 
 On every push and pull request to `main`, GitHub Actions:
 1. **Test:** starts a PostgreSQL 17 service container, installs dependencies, and runs the unit tests and then the integration tests with coverage.
-2. **Deploy** (pushes to `main` only, after the tests pass): builds the image and pushes it to Docker Hub as `secure-user-model:latest` and `secure-user-model:<commit-sha>`.
+2. **Build and scan:** builds the Docker image and scans it for fixable high and critical OS or library vulnerabilities. A failed scan blocks publishing.
+3. **Deploy** (pushes to `main` only, after tests and a successful scan): logs in to Docker Hub and pushes the scanned image as `secure-user-model:latest` and `secure-user-model:<commit-sha>`. Pull requests run the build and scan but never log in or publish.
 
 ### Setup
 1. On Docker Hub, create an access token (**Account settings → Personal access tokens**, with *Read & Write* access).
@@ -90,7 +99,7 @@ On every push and pull request to `main`, GitHub Actions:
 Pull the published image:
 
 ```bash
-docker pull <your-dockerhub-username>/secure-user-model:latest
+docker pull av477/secure-user-model:latest
 ```
 
 ## Project structure
