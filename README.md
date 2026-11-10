@@ -53,6 +53,11 @@ DB_PORT=5434 API_PORT=8001 docker compose up --build
 
 ## Run the tests locally
 
+Run the unit tests with `pytest tests/unit` (no database required). Integration
+tests use a disposable PostgreSQL database; set `DATABASE_URL` to that test
+database before running them. The integration tests drop and recreate its
+`users` table, so do not point them at production or other data you need.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # macOS/Linux
