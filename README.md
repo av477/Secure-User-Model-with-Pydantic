@@ -51,6 +51,55 @@ This starts PostgreSQL 17 and the API on `http://localhost:8000`. If ports 5432 
 DB_PORT=5434 API_PORT=8001 docker compose up --build
 ```
 
+## Run the Docker Hub image
+
+You can run the published image without cloning the repository. The API needs a
+PostgreSQL database, and you give it the address in the `DATABASE_URL`
+environment variable. If you start the image on its own with
+`docker run av477/secure-user-model`, the app looks for PostgreSQL at
+`localhost:5432`. Inside a container, `localhost` is the container itself, so
+startup fails with `Connection refused`.
+
+1. Create a network so the two containers can reach each other by name:
+
+   ```bash
+   docker network create secure-user-net
+   ```
+
+2. Start PostgreSQL on that network:
+
+   ```bash
+   docker run -d --name secure-user-db --network secure-user-net -e POSTGRES_USER=appuser -e POSTGRES_PASSWORD=apppassword -e POSTGRES_DB=secure_users postgres:17
+   ```
+
+3. Wait until PostgreSQL is ready. Repeat this command until it reports `accepting connections`:
+
+   ```bash
+   docker exec secure-user-db pg_isready -U appuser -d secure_users
+   ```
+
+4. Start the API on the same network, pointing it at the database container by its name:
+
+   ```bash
+   docker run --rm --name secure-user-api -p 8000:8000 --network secure-user-net -e DATABASE_URL=postgresql+psycopg2://appuser:apppassword@secure-user-db:5432/secure_users av477/secure-user-model:latest
+   ```
+
+5. Open `http://localhost:8000/docs` to try the API. The tables are created automatically on startup.
+
+To use a specific build instead of `latest`, replace the tag with a commit SHA
+from the [Docker Hub tags page](https://hub.docker.com/r/av477/secure-user-model/tags).
+If port 8000 is already in use, change the first port, for example `-p 8001:8000`.
+
+To stop and clean up (press `Ctrl+C` in the API's terminal first):
+
+```bash
+docker rm -f secure-user-db
+```
+
+```bash
+docker network rm secure-user-net
+```
+
 ## Run the tests locally
 
 Run the unit tests with `pytest tests/unit` (no database required). Integration
@@ -75,7 +124,7 @@ pytest tests/integration --cov=app --cov-report=term-missing
 ```
 
 In Windows PowerShell, set the database URL with
-`$env:DATABASE_URL = "******localhost:5433/ci_users"` instead of `export`.
+`$env:DATABASE_URL = "postgresql+psycopg2://ci_user:ci_password@localhost:5433/ci_users"` instead of `export`.
 Before running the integration tests, check that PostgreSQL is ready with
 `docker exec test-db pg_isready -U ci_user -d ci_users`; repeat until it reports
 that the server is accepting connections. Stop the disposable database with
@@ -89,7 +138,7 @@ The integration tests drop and recreate the `users` table, so point `DATABASE_UR
 
 ## CI/CD
 
-On every push and pull request to `main`, GitHub Actions:
+On every push to any branch, and on pull requests to `main`, GitHub Actions:
 1. **Test:** starts a PostgreSQL 17 service container, installs dependencies, and runs the unit tests and then the integration tests with combined coverage. The workflow fails unless total coverage is at least 90%.
 2. **Build and scan:** builds the Docker image and scans it for fixable high and critical OS or library vulnerabilities. A failed scan blocks publishing.
 3. **Deploy** (pushes to `main` only, after tests and a successful scan): logs in to Docker Hub and pushes the scanned image as `secure-user-model:latest` and `secure-user-model:<commit-sha>`. Pull requests run the build and scan but never log in or publish.
@@ -106,6 +155,8 @@ Pull the published image:
 ```bash
 docker pull av477/secure-user-model:latest
 ```
+
+See [Run the Docker Hub image](#run-the-docker-hub-image) for how to run it with a database.
 
 ## Project structure
 
