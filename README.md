@@ -85,7 +85,7 @@ The integration tests drop and recreate the `users` table, so point `DATABASE_UR
 ## CI/CD
 
 On every push and pull request to `main`, GitHub Actions:
-1. **Test:** starts a PostgreSQL 17 service container, installs dependencies, and runs the unit tests and then the integration tests with coverage.
+1. **Test:** starts a PostgreSQL 17 service container, installs dependencies, and runs the unit tests and then the integration tests with combined coverage. The workflow fails unless total coverage is at least 90%.
 2. **Build and scan:** builds the Docker image and scans it for fixable high and critical OS or library vulnerabilities. A failed scan blocks publishing.
 3. **Deploy** (pushes to `main` only, after tests and a successful scan): logs in to Docker Hub and pushes the scanned image as `secure-user-model:latest` and `secure-user-model:<commit-sha>`. Pull requests run the build and scan but never log in or publish.
 

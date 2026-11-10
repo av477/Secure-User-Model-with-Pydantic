@@ -10,6 +10,10 @@ WORKDIR /app
 # Run as an unprivileged user instead of root.
 RUN groupadd --system app && useradd --system --gid app --home /app app
 
+RUN apt-get update \
+    && apt-get install --only-upgrade -y zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
