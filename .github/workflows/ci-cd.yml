@@ -52,7 +52,8 @@ jobs:
       - name: Integration tests (PostgreSQL)
         run: >-
           pytest tests/integration -m integration
-          --cov=app --cov-append --cov-report=term-missing --cov-report=xml
+          --cov=app --cov-append --cov-fail-under=90
+          --cov-report=term-missing --cov-report=xml
           --junitxml=test-results/junit.xml
 
       - name: Upload test results
